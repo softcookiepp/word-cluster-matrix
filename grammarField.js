@@ -5,6 +5,7 @@ const pluralize = require('pluralize');
 const { PNG } = require('pngjs');
 const fs = require('fs');
 const getFeatures = require('./features');
+const WordFilter=require("./wordFilter")
 
 const tokenizer = new natural.WordTokenizer();
 
@@ -20,12 +21,16 @@ const colorMappings = [
 class GrammarField {
 
   /**
-   *
+   * 
    */
-  constructor(sentences = [], times = []) {
+  constructor(sentences = [], times = [],wordFilters=[]) {
     if (sentences.length !== times.length) {
       throw new RangeError('Words must be the same length as times');
     }
+    
+	var st=this.filterWords(sentences,times,wordFilters);
+	sentences=st[0];
+	times=st[1];
 
     this.timeSentenceMap = new Array(maxSize);
     this.uniqueWords = {};
@@ -35,8 +40,38 @@ class GrammarField {
     this.featureMatrix = math.sparse(math.zeros(maxSize, 21));
 
     this.calculate(sentences, times)
+    
+    
   }
-
+  
+  
+  
+  /**
+   * Removes sentences not matching specific criteria specified in word filters, as well as times corresponding to those sentences.
+   * Used upon initialization before anything else is done.
+   */
+  filterWords(sentences,times,wordFilters)
+  {
+	//initialize word filter object.
+	var wordFilter=null;
+	if(wordFilters instanceof WordFilter.WordFilter || wordFilters instanceof WordFilter.CompositeWordFilter)
+	{
+		wordFilter=wordFilters;
+	}
+	else if(Array.isArray(wordFilters))
+	{
+		wordFilter=new WordFilter.WordFilter(wordFilters);
+	}
+	else
+	{
+		throw new TypeError("Word filter must be of the following types: WordFilter (or extends WordFilter,) CompositeWordFilter, or arrayy of functions.");
+	}
+	
+	//filter sentences
+	var st=wordFilter.filter(sentences,times);
+	return st;
+  }
+  
   /**
    *
    */
@@ -327,6 +362,10 @@ class GrammarField {
     }
 
     // @TODO: create PNG
+  }
+  
+  executeWordFilters()
+  {
   }
 }
 
