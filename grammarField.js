@@ -26,7 +26,7 @@ class GrammarField {
     if (sentences.length !== times.length) {
       throw new RangeError('Words must be the same length as times');
     }
-		this.wordBlacklist=this.preprocessWordBlacklist(wordBlacklist);
+    this.wordBlacklist=this.preprocessWordBlacklist(wordBlacklist);
     this.timeSentenceMap = new Array(maxSize);
     this.uniqueWords = {};
     this.maxCluster = 0;
@@ -46,15 +46,15 @@ class GrammarField {
    */
   preprocessWordBlacklist(bl=[])
   {
-	  var newBL=[]
-	  for(let i=0;i<bl.length;i++)
-	  {
-		  var word=bl[i]
-		  word=word.toLowerCase()
-		  word=pluralize.singular(word)
-		  newBL.push(word)
-	  }
-	  return newBL
+    var newBL=[]
+    for(let i=0;i<bl.length;i++)
+    {
+      var word=bl[i]
+      word=word.toLowerCase()
+      word=pluralize.singular(word)
+      newBL.push(word)
+    }
+    return newBL
   }
   
   /**
@@ -71,7 +71,7 @@ class GrammarField {
       if (sentence === undefined) {
         continue
       }
-		
+    
       // Remove all stop words and lower case each word
       const words = removeStopwords(tokenizer.tokenize(sentence.toLowerCase()));
       
@@ -83,32 +83,33 @@ class GrammarField {
         // Singularize all words to make context easier to group
         const word = pluralize.singular(baseWord);
         
-				//condition for word filter
-				if(this.wordBlacklist.includes(word) == false)
-				{
-					if (this.uniqueWords[word] === undefined) {
-						this.uniqueWords[word] = {
-						count: 0,
-						sentences: [],
-						word
-						};
-					}
-				
-				
-					// We identify the unique word, count how many times it has appeared, and what sentences it has been found in
-					this.uniqueWords[word].count += 1;
-					this.uniqueWords[word].sentences.push(sentenceIndex);
+        // condition for word filter
+        // everything relating to the word parameter calculation was put inside this condition block in order to avoid errors
+        if(this.wordBlacklist.includes(word) == false)
+        {
+          if (this.uniqueWords[word] === undefined) {
+            this.uniqueWords[word] = {
+            count: 0,
+            sentences: [],
+            word
+            };
+          }
+        
+        
+          // We identify the unique word, count how many times it has appeared, and what sentences it has been found in
+          this.uniqueWords[word].count += 1;
+          this.uniqueWords[word].sentences.push(sentenceIndex);
 
-					// We update the size of the largest unique word cluster
-					if (this.uniqueWords[word].count > this.maxCluster) {
-						this.maxCluster = this.uniqueWords[word].count;
-					}
-				}
+          // We update the size of the largest unique word cluster
+          if (this.uniqueWords[word].count > this.maxCluster) {
+            this.maxCluster = this.uniqueWords[word].count;
+          }
+        }
       }
 
       sentenceIndex += 1;
     }
-
+    
     // Prepare time-sentence indexes with simple percentage differences
     sentenceIndex = 0;
     for (const time of times) {
