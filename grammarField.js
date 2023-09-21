@@ -5,7 +5,6 @@ const pluralize = require('pluralize');
 const { PNG } = require('pngjs');
 const fs = require('fs');
 const getFeatures = require('./features');
-const WordFilter=require("./wordFilter")
 
 const tokenizer = new natural.WordTokenizer();
 
@@ -23,15 +22,11 @@ class GrammarField {
   /**
    * 
    */
-  constructor(sentences = [], times = [],wordFilters=[]) {
+  constructor(sentences = [], times = [],wordBlacklist=[]) {
     if (sentences.length !== times.length) {
       throw new RangeError('Words must be the same length as times');
     }
-    
-	var st=this.filterWords(sentences,times,wordFilters);
-	sentences=st[0];
-	times=st[1];
-
+		this.wordBlacklist=this.preprocessWordBlacklist(wordBlacklist);
     this.timeSentenceMap = new Array(maxSize);
     this.uniqueWords = {};
     this.maxCluster = 0;
@@ -47,29 +42,19 @@ class GrammarField {
   
   
   /**
-   * Removes sentences not matching specific criteria specified in word filters, as well as times corresponding to those sentences.
-   * Used upon initialization before anything else is done.
+   * singularizes all the words in the blacklist and converts them to lowercase
    */
-  filterWords(sentences,times,wordFilters)
+  preprocessWordBlacklist(bl=[])
   {
-	//initialize word filter object.
-	var wordFilter=null;
-	if(wordFilters instanceof WordFilter.WordFilter || wordFilters instanceof WordFilter.CompositeWordFilter)
-	{
-		wordFilter=wordFilters;
-	}
-	else if(Array.isArray(wordFilters))
-	{
-		wordFilter=new WordFilter.WordFilter(wordFilters);
-	}
-	else
-	{
-		throw new TypeError("Word filter must be of the following types: WordFilter (or extends WordFilter,) CompositeWordFilter, or arrayy of functions.");
-	}
-	
-	//filter sentences
-	var st=wordFilter.filter(sentences,times);
-	return st;
+	  var newBL=[]
+	  for(let i=0;i<bl.length;i++)
+	  {
+		  var word=bl[i]
+		  word=word.toLowerCase()
+		  word=pluralize.singular(word)
+		  newBL.push(word)
+	  }
+	  return newBL
   }
   
   /**
@@ -78,7 +63,7 @@ class GrammarField {
   calculate (sentences = [], times = []) {
     const minTime = math.min(times);
     const maxTime = math.max(times);
-
+    
     // Prepare word-sentence indexes
     let sentenceIndex = 0;
 
@@ -86,34 +71,39 @@ class GrammarField {
       if (sentence === undefined) {
         continue
       }
-
+		
       // Remove all stop words and lower case each word
       const words = removeStopwords(tokenizer.tokenize(sentence.toLowerCase()));
-
+      
       for (const baseWord of words) {
         if (baseWord === '') {
           continue
         }
 
         // Singularize all words to make context easier to group
-        const word = pluralize.singular(baseWord)
+        const word = pluralize.singular(baseWord);
+        
+				//condition for word filter
+				if(this.wordBlacklist.includes(word) == false)
+				{
+					if (this.uniqueWords[word] === undefined) {
+						this.uniqueWords[word] = {
+						count: 0,
+						sentences: [],
+						word
+						};
+					}
+				
+				
+					// We identify the unique word, count how many times it has appeared, and what sentences it has been found in
+					this.uniqueWords[word].count += 1;
+					this.uniqueWords[word].sentences.push(sentenceIndex);
 
-        if (this.uniqueWords[word] === undefined) {
-          this.uniqueWords[word] = {
-            count: 0,
-            sentences: [],
-            word
-          };
-        }
-
-        // We identify the unique word, count how many times it has appeared, and what sentences it has been found in
-        this.uniqueWords[word].count += 1;
-        this.uniqueWords[word].sentences.push(sentenceIndex);
-
-        // We update the size of the largest unique word cluster
-        if (this.uniqueWords[word].count > this.maxCluster) {
-          this.maxCluster = this.uniqueWords[word].count;
-        }
+					// We update the size of the largest unique word cluster
+					if (this.uniqueWords[word].count > this.maxCluster) {
+						this.maxCluster = this.uniqueWords[word].count;
+					}
+				}
       }
 
       sentenceIndex += 1;
