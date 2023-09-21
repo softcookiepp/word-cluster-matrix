@@ -46,15 +46,15 @@ class GrammarField {
    */
   preprocessWordBlacklist(bl=[])
   {
-    var newBL=[]
+    var newBL=[];
     for(let i=0;i<bl.length;i++)
     {
-      var word=bl[i]
-      word=word.toLowerCase()
-      word=pluralize.singular(word)
-      newBL.push(word)
+      var word=bl[i];
+      word=word.toLowerCase();
+      word=pluralize.singular(word);
+      newBL.push(word);
     }
-    return newBL
+    return newBL;
   }
   
   /**
