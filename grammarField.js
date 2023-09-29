@@ -22,11 +22,11 @@ class GrammarField {
   /**
    * 
    */
-  constructor(sentences = [], times = [],wordBlacklist=[]) {
+  constructor(sentences = [], times = [], wordBlacklist = []) {
     if (sentences.length !== times.length) {
       throw new RangeError('Words must be the same length as times');
     }
-    this.wordBlacklist=this.preprocessWordBlacklist(wordBlacklist);
+    this.wordBlacklist = this.preprocessWordBlacklist(wordBlacklist);
     this.timeSentenceMap = new Array(maxSize);
     this.uniqueWords = {};
     this.maxCluster = 0;
@@ -44,17 +44,17 @@ class GrammarField {
   /**
    * singularizes all the words in the blacklist and converts them to lowercase
    */
-  preprocessWordBlacklist(bl=[])
+  preprocessWordBlacklist(bl = [])
   {
-    var newBL=[];
-    for(let i=0;i<bl.length;i++)
+    const newPreprocessedBlacklist = [];
+    for (let i = 0; i < bl.length; i++)
     {
-      var word=bl[i];
-      word=word.toLowerCase();
-      word=pluralize.singular(word);
-      newBL.push(word);
+      var word = bl[i];
+      word = word.toLowerCase();
+      word = pluralize.singular(word);
+      newPreprocessedBlacklist.push(word);
     }
-    return newBL;
+    return newPreprocessedBlacklist;
   }
   
   /**
@@ -85,7 +85,7 @@ class GrammarField {
         
         // condition for word filter
         // everything relating to the word parameter calculation was put inside this condition block in order to avoid errors
-        if(this.wordBlacklist.includes(word) == false)
+        if(this.wordBlacklist.indexOf(word) === -1)
         {
           if (this.uniqueWords[word] === undefined) {
             this.uniqueWords[word] = {
@@ -353,10 +353,6 @@ class GrammarField {
     }
 
     // @TODO: create PNG
-  }
-  
-  executeWordFilters()
-  {
   }
 }
 
